@@ -1,0 +1,147 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segura UI', Roboto, sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 500px;
+    padding: 2rem;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #00ff88;
+    font-weight: 300;
+}
+
+.upload-zone {
+    border: 2px dashed #333;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #111;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+    border-color: #00ff88;
+    background: #0a1a0f;
+}
+
+.upload-icon {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.upload-zone:hover .upload-icon,
+.upload-zone.drag-over .upload-icon {
+    color: #00ff88;
+}
+
+.browse-text {
+    color: #00ff88;
+    text-decoration: underline;
+}
+
+.file-info {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.file-list {
+    margin: 1.5rem 0;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.file-name {
+    font-size: 0.9rem;
+    truncate: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.file-status {
+    margin-left: 1rem;
+    font-size: 1.2rem;
+}
+
+.status-pending { color: #666; }
+.status-uploading { color: #ffaa00; }
+.status-success { color: #00ff88; }
+.status-error { color: #ff4444; }
+
+button {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #00ff88;
+    background: transparent;
+    color: #00ff88;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+    background: #00ff88;
+    color: #000;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.clear-btn {
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+.clear-btn:hover {
+    background: #ff4444;
+    color: #000;
+}
+
+.status {
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .upload-zone {
+        padding: 2rem 1rem;
+    }
+}
