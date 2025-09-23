@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Image Uploader</title>
+    <title>Wattco Antenna Configurator - Document Upload</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Image Uploader</h1>
+        <h1>Antenna Specs Upload</h1>
         <div class="upload-zone" id="uploadZone">
             <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7,10 12,15 17,10"></polyline>
                 <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
-            <p>Drop images here or <span class="browse-text">browse</span></p>
-            <p class="file-info">JPG, PNG, WEBP • Max 10MB each</p>
+            <p>Drop antenna specifications here or <span class="browse-text">browse</span></p>
+            <p class="file-info">JPG, PNG, WEBP, PDF • Max 10MB each</p>
         </div>
-        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple style="display: none;">
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,application/pdf" multiple style="display: none;">
         
         <div class="file-list" id="fileList"></div>
         
-        <button class="upload-btn" id="uploadBtn" disabled>Upload Images</button>
+        <button class="upload-btn" id="uploadBtn" disabled>Upload Documents</button>
         <button class="clear-btn" id="clearBtn">Clear All</button>
         
         <div class="status" id="status"></div>
