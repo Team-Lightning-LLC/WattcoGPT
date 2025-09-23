@@ -1,9 +1,9 @@
 class SecureImageUploader {
     constructor() {
         this.files = [];
-        this.maxFileSize = 10 * 1024 * 1024; // 10MB
-        this.allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        this.maxFiles = 10;
+        this.maxFileSize = parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024; // 10MB
+        this.allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+        this.maxFiles = parseInt(process.env.MAX_FILES) || 10;
         this.webhookUrl = process.env.WEBHOOK_URL || 'https://your-n8n-webhook-url.com/webhook/upload';
         
         this.initElements();
@@ -76,13 +76,14 @@ class SecureImageUploader {
         files.forEach(file => {
             // Check file type
             if (!this.allowedTypes.includes(file.type)) {
-                errors.push(`${file.name}: Invalid file type`);
+                errors.push(`${file.name}: Invalid file type (accepted: images, PDF)`);
                 return;
             }
             
             // Check file size
             if (file.size > this.maxFileSize) {
-                errors.push(`${file.name}: File too large (max 10MB)`);
+                const sizeMB = Math.round(this.maxFileSize / (1024 * 1024));
+                errors.push(`${file.name}: File too large (max ${sizeMB}MB)`);
                 return;
             }
             
@@ -103,12 +104,16 @@ class SecureImageUploader {
     }
     
     renderFileList() {
-        this.fileList.innerHTML = this.files.map((file, index) => `
-            <div class="file-item" data-index="${index}">
-                <span class="file-name" title="${file.name}">${file.name}</span>
-                <span class="file-status status-pending" id="status-${index}">⏳</span>
-            </div>
-        `).join('');
+        this.fileList.innerHTML = this.files.map((file, index) => {
+            const fileIcon = file.type === 'application/pdf' ? '📄' : '🖼️';
+            return `
+                <div class="file-item" data-index="${index}">
+                    <span class="file-icon">${fileIcon}</span>
+                    <span class="file-name" title="${file.name}">${file.name}</span>
+                    <span class="file-status status-pending" id="status-${index}">⏳</span>
+                </div>
+            `;
+        }).join('');
     }
     
     updateButtons() {
@@ -119,7 +124,7 @@ class SecureImageUploader {
         if (this.files.length === 0) return;
         
         this.uploadBtn.disabled = true;
-        this.showStatus('Uploading files...', 'uploading');
+        this.showStatus('Uploading documents...', 'uploading');
         
         const results = await Promise.allSettled(
             this.files.map((file, index) => this.uploadSingleFile(file, index))
@@ -146,10 +151,11 @@ class SecureImageUploader {
             
             // Create secure FormData
             const formData = new FormData();
-            formData.append('image', file);
+            formData.append('document', file);
             formData.append('timestamp', Date.now());
             formData.append('fileSize', file.size);
             formData.append('fileType', file.type);
+            formData.append('source', 'wattco-antenna-configurator');
             
             const response = await fetch(this.webhookUrl, {
                 method: 'POST',
