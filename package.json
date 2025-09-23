@@ -1,14 +1,13 @@
 {
-  "name": "secure-image-uploader",
+  "name": "wattco-antenna-configurator",
   "version": "1.0.0",
-  "description": "Secure image uploader for n8n webhooks",
-  "main": "server.js",
+  "description": "Document uploader for Wattco antenna configuration system",
+  "main": "index.html",
   "scripts": {
-    "start": "node server.js",
     "dev": "python -m http.server 8000",
     "test": "echo \"No tests yet\" && exit 0"
   },
-  "keywords": ["image", "upload", "security", "n8n"],
-  "author": "Your Name",
+  "keywords": ["wattco", "antenna", "configurator", "upload", "n8n"],
+  "author": "Wattco",
   "license": "MIT"
 }
