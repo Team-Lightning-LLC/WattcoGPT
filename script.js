@@ -172,7 +172,7 @@ class SecureImageUploader {
             statusEl.className = 'file-status status-uploading';
             
             const formData = new FormData();
-            formData.append('document', file);
+            formData.append('data', file);
             formData.append('timestamp', Date.now());
             formData.append('fileSize', file.size);
             formData.append('fileType', file.type);
