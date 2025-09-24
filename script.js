@@ -1,243 +1,378 @@
-class SecureImageUploader {
-    constructor() {
-        this.files = [];
-        this.maxFileSize = 10 * 1024 * 1024; // 10MB
-        this.allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-        this.maxFiles = 10;
-        // REPLACE THIS WITH YOUR ACTUAL WEBHOOK URL
-        this.webhookUrl = 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2';
-        
-        this.initElements();
-        this.bindEvents();
-        console.log('Uploader initialized successfully');
-    }
+// Configuration
+const CONFIG = {
+  n8nWebhook: 'YOUR_N8N_WEBHOOK_URL_HERE', // For BOM generation
+  equipmentAPI: '/api/equipment', // Replace with your equipment API endpoint
+  generationsAPI: '/api/generations', // Replace with your generations API endpoint
+};
+
+// DOM Elements
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const startBtn = document.getElementById('startBtn');
+const queueList = document.getElementById('queueList');
+const equipmentList = document.getElementById('equipmentList');
+const addEquipmentBtn = document.getElementById('addEquipmentBtn');
+
+// State
+let uploadedFiles = [];
+let equipmentItems = [];
+let pastGenerations = [];
+
+// ========== EQUIPMENT CATALOGUE API ==========
+
+async function loadEquipment() {
+  try {
+    const response = await fetch(CONFIG.equipmentAPI);
+    if (!response.ok) throw new Error('Failed to load equipment');
     
-    initElements() {
-        this.uploadZone = document.getElementById('uploadZone');
-        this.fileInput = document.getElementById('fileInput');
-        this.fileList = document.getElementById('fileList');
-        this.uploadBtn = document.getElementById('uploadBtn');
-        this.clearBtn = document.getElementById('clearBtn');
-        this.status = document.getElementById('status');
-        
-        console.log('Elements found:', {
-            uploadZone: !!this.uploadZone,
-            fileInput: !!this.fileInput,
-            uploadBtn: !!this.uploadBtn
-        });
-    }
-    
-    bindEvents() {
-        // Click anywhere in upload zone to browse
-        this.uploadZone.onclick = () => {
-            console.log('Upload zone clicked');
-            this.fileInput.click();
-        };
-        
-        // File input change
-        this.fileInput.onchange = (e) => {
-            console.log('Files selected:', e.target.files.length);
-            this.handleFiles(e.target.files);
-        };
-        
-        // Drag and drop
-        this.uploadZone.ondragover = (e) => {
-            e.preventDefault();
-            this.uploadZone.classList.add('drag-over');
-        };
-        
-        this.uploadZone.ondragleave = (e) => {
-            e.preventDefault();
-            this.uploadZone.classList.remove('drag-over');
-        };
-        
-        this.uploadZone.ondrop = (e) => {
-            e.preventDefault();
-            this.uploadZone.classList.remove('drag-over');
-            console.log('Files dropped:', e.dataTransfer.files.length);
-            this.handleFiles(e.dataTransfer.files);
-        };
-        
-        // Buttons
-        this.uploadBtn.onclick = () => this.uploadFiles();
-        this.clearBtn.onclick = () => this.clearFiles();
-        
-        console.log('Events bound successfully');
-    }
-    
-    handleFiles(fileList) {
-        console.log('Processing files:', fileList.length);
-        const validFiles = this.validateFiles(Array.from(fileList));
-        
-        if (validFiles.length === 0) {
-            console.log('No valid files');
-            return;
-        }
-        
-        if (this.files.length + validFiles.length > this.maxFiles) {
-            this.showStatus(`Maximum ${this.maxFiles} files allowed`, 'error');
-            return;
-        }
-        
-        this.files.push(...validFiles);
-        this.renderFileList();
-        this.updateButtons();
-        this.showStatus(`${validFiles.length} file(s) added`, 'success');
-    }
-    
-    validateFiles(files) {
-        const validFiles = [];
-        const errors = [];
-        
-        files.forEach(file => {
-            console.log('Validating:', file.name, file.type, file.size);
-            
-            if (!this.allowedTypes.includes(file.type)) {
-                errors.push(`${file.name}: Invalid type (${file.type})`);
-                return;
-            }
-            
-            if (file.size > this.maxFileSize) {
-                errors.push(`${file.name}: Too large (max 10MB)`);
-                return;
-            }
-            
-            if (this.files.some(f => f.name === file.name && f.size === file.size)) {
-                errors.push(`${file.name}: Already added`);
-                return;
-            }
-            
-            validFiles.push(file);
-        });
-        
-        if (errors.length > 0) {
-            console.error('Validation errors:', errors);
-            this.showStatus(errors.join('\n'), 'error');
-        }
-        
-        return validFiles;
-    }
-    
-    renderFileList() {
-        this.fileList.innerHTML = this.files.map((file, index) => {
-            const fileIcon = file.type === 'application/pdf' ? '📄' : '🖼️';
-            const sizeKB = (file.size / 1024).toFixed(1);
-            return `
-                <div class="file-item" data-index="${index}">
-                    <span class="file-icon">${fileIcon}</span>
-                    <span class="file-name" title="${file.name}">${file.name} (${sizeKB} KB)</span>
-                    <span class="file-status status-pending" id="status-${index}">⏳</span>
-                </div>
-            `;
-        }).join('');
-    }
-    
-    updateButtons() {
-        this.uploadBtn.disabled = this.files.length === 0;
-        this.clearBtn.disabled = this.files.length === 0;
-    }
-    
-    async uploadFiles() {
-        if (this.files.length === 0) return;
-        
-        console.log('Starting upload of', this.files.length, 'files');
-        this.uploadBtn.disabled = true;
-        this.clearBtn.disabled = true;
-        this.showStatus('Uploading documents...', 'uploading');
-        
-        const results = await Promise.allSettled(
-            this.files.map((file, index) => this.uploadSingleFile(file, index))
-        );
-        
-        const successful = results.filter(r => r.status === 'fulfilled').length;
-        const failed = results.length - successful;
-        
-        let statusText = `Upload complete: ${successful} successful`;
-        if (failed > 0) {
-            statusText += `, ${failed} failed`;
-        }
-        
-        console.log('Upload results:', statusText);
-        this.showStatus(statusText, failed > 0 ? 'error' : 'success');
-        this.uploadBtn.disabled = false;
-        this.clearBtn.disabled = false;
-    }
-    
-    async uploadSingleFile(file, index) {
-        const statusEl = document.getElementById(`status-${index}`);
-        
-        try {
-            console.log('Uploading:', file.name);
-            statusEl.textContent = '📤';
-            statusEl.className = 'file-status status-uploading';
-            
-            const formData = new FormData();
-            formData.append('data', file);
-            formData.append('timestamp', Date.now());
-            formData.append('fileSize', file.size);
-            formData.append('fileType', file.type);
-            formData.append('fileName', file.name);
-            formData.append('source', 'wattco-antenna-configurator');
-            
-            const response = await fetch(this.webhookUrl, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const result = await response.json();
-            console.log('Upload success:', file.name, result);
-            
-            statusEl.textContent = '✅';
-            statusEl.className = 'file-status status-success';
-            
-            return { success: true, file: file.name };
-            
-        } catch (error) {
-            console.error('Upload failed:', file.name, error);
-            statusEl.textContent = '❌';
-            statusEl.className = 'file-status status-error';
-            statusEl.title = error.message;
-            
-            throw error;
-        }
-    }
-    
-    clearFiles() {
-        console.log('Clearing all files');
-        this.files = [];
-        this.fileInput.value = '';
-        this.fileList.innerHTML = '';
-        this.updateButtons();
-        this.showStatus('Files cleared', 'info');
-    }
-    
-    showStatus(message, type = 'info') {
-        console.log('Status:', type, message);
-        this.status.textContent = message;
-        this.status.className = `status status-${type}`;
-        
-        if (type !== 'error' && type !== 'uploading') {
-            setTimeout(() => {
-                this.status.textContent = '';
-                this.status.className = 'status';
-            }, 5000);
-        }
-    }
+    equipmentItems = await response.json();
+    renderEquipment();
+  } catch (error) {
+    console.error('Error loading equipment:', error);
+    // Fallback to default data
+    equipmentItems = [
+      { id: 1, name: 'APX 8500 – Radio' },
+      { id: 2, name: 'Toughbook – Tablet' }
+    ];
+    renderEquipment();
+  }
 }
 
-// Initialize
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.uploader = new SecureImageUploader();
+async function addEquipment(name) {
+  try {
+    const response = await fetch(CONFIG.equipmentAPI, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
     });
-} else {
-    window.uploader = new SecureImageUploader();
+    
+    if (!response.ok) throw new Error('Failed to add equipment');
+    
+    const newItem = await response.json();
+    equipmentItems.push(newItem);
+    renderEquipment();
+    return true;
+  } catch (error) {
+    console.error('Error adding equipment:', error);
+    alert('Failed to add equipment: ' + error.message);
+    return false;
+  }
 }
+
+async function updateEquipment(id, name) {
+  try {
+    const response = await fetch(`${CONFIG.equipmentAPI}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    
+    if (!response.ok) throw new Error('Failed to update equipment');
+    
+    const updated = await response.json();
+    const index = equipmentItems.findIndex(item => item.id === id);
+    if (index !== -1) {
+      equipmentItems[index] = updated;
+      renderEquipment();
+    }
+    return true;
+  } catch (error) {
+    console.error('Error updating equipment:', error);
+    alert('Failed to update equipment: ' + error.message);
+    return false;
+  }
+}
+
+async function deleteEquipment(id) {
+  try {
+    const response = await fetch(`${CONFIG.equipmentAPI}/${id}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) throw new Error('Failed to delete equipment');
+    
+    equipmentItems = equipmentItems.filter(item => item.id !== id);
+    renderEquipment();
+    return true;
+  } catch (error) {
+    console.error('Error deleting equipment:', error);
+    alert('Failed to delete equipment: ' + error.message);
+    return false;
+  }
+}
+
+function renderEquipment() {
+  equipmentList.innerHTML = equipmentItems.map((item) => `
+    <li>
+      ${item.name}
+      <span class="actions">
+        <span onclick="handleEditEquipment(${item.id})" style="cursor: pointer;">✏️</span>
+        <span onclick="handleDeleteEquipment(${item.id})" style="cursor: pointer;">🗑</span>
+      </span>
+    </li>
+  `).join('');
+}
+
+function handleEditEquipment(id) {
+  const item = equipmentItems.find(e => e.id === id);
+  if (!item) return;
+  
+  const newName = prompt('Edit equipment name:', item.name);
+  if (newName && newName.trim()) {
+    updateEquipment(id, newName.trim());
+  }
+}
+
+function handleDeleteEquipment(id) {
+  const item = equipmentItems.find(e => e.id === id);
+  if (!item) return;
+  
+  if (confirm(`Delete "${item.name}"?`)) {
+    deleteEquipment(id);
+  }
+}
+
+addEquipmentBtn.addEventListener('click', () => {
+  const name = prompt('Enter equipment name:');
+  if (name && name.trim()) {
+    addEquipment(name.trim());
+  }
+});
+
+// ========== PAST GENERATIONS API ==========
+
+async function loadPastGenerations() {
+  try {
+    const response = await fetch(CONFIG.generationsAPI);
+    if (!response.ok) throw new Error('Failed to load past generations');
+    
+    pastGenerations = await response.json();
+    renderPastGenerations();
+  } catch (error) {
+    console.error('Error loading past generations:', error);
+    // Fallback to default data
+    pastGenerations = [
+      { id: 1, filename: 'East_City_BOM.txt', type: 'BOM', date: '9/24/2025' },
+      { id: 2, filename: 'Municipality_Upgrade_BOM.txt', type: 'BOM', date: '9/23/2025' }
+    ];
+    renderPastGenerations();
+  }
+}
+
+function renderPastGenerations() {
+  const container = document.querySelector('.right-panel');
+  const generationsHTML = pastGenerations.map(doc => `
+    <div class="doc-card">
+      <div>
+        <div class="doc-title">${doc.filename}</div>
+        <div class="doc-meta">${doc.type} • ${doc.date}</div>
+      </div>
+      <div class="doc-actions">
+        <button onclick="viewDocument(${doc.id})" title="View">👁</button>
+        <button onclick="downloadDocument(${doc.id})" title="Download">⬇</button>
+        <button onclick="handleDeleteDocument(${doc.id})" title="Delete">🗑</button>
+      </div>
+    </div>
+  `).join('');
+  
+  container.innerHTML = `<h2>Past Generations</h2>${generationsHTML}`;
+}
+
+async function viewDocument(id) {
+  try {
+    const response = await fetch(`${CONFIG.generationsAPI}/${id}`);
+    if (!response.ok) throw new Error('Failed to load document');
+    
+    const doc = await response.json();
+    
+    // Open in new window or modal
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(doc.html || doc.content);
+    newWindow.document.close();
+  } catch (error) {
+    console.error('Error viewing document:', error);
+    alert('Failed to view document: ' + error.message);
+  }
+}
+
+async function downloadDocument(id) {
+  try {
+    const response = await fetch(`${CONFIG.generationsAPI}/${id}/download`);
+    if (!response.ok) throw new Error('Failed to download document');
+    
+    const blob = await response.blob();
+    const doc = pastGenerations.find(d => d.id === id);
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = doc?.filename || `document-${id}.html`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } catch (error) {
+    console.error('Error downloading document:', error);
+    alert('Failed to download document: ' + error.message);
+  }
+}
+
+async function handleDeleteDocument(id) {
+  const doc = pastGenerations.find(d => d.id === id);
+  if (!doc) return;
+  
+  if (!confirm(`Delete "${doc.filename}"?`)) return;
+  
+  try {
+    const response = await fetch(`${CONFIG.generationsAPI}/${id}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) throw new Error('Failed to delete document');
+    
+    pastGenerations = pastGenerations.filter(d => d.id !== id);
+    renderPastGenerations();
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    alert('Failed to delete document: ' + error.message);
+  }
+}
+
+// ========== FILE UPLOAD & QUEUE ==========
+
+uploadZone.addEventListener('click', () => fileInput.click());
+
+uploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadZone.classList.add('drag-over');
+});
+
+uploadZone.addEventListener('dragleave', () => {
+  uploadZone.classList.remove('drag-over');
+});
+
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', (e) => {
+  handleFiles(e.target.files);
+});
+
+function handleFiles(files) {
+  uploadedFiles = Array.from(files);
+  updateUploadZone();
+  updateQueue();
+}
+
+function updateUploadZone() {
+  if (uploadedFiles.length > 0) {
+    uploadZone.innerHTML = `<p>${uploadedFiles.length} file(s) selected</p>`;
+  } else {
+    uploadZone.innerHTML = '<p>Drop spec files here or <span class="browse-text">browse</span></p>';
+  }
+}
+
+function updateQueue() {
+  if (uploadedFiles.length === 0) {
+    queueList.innerHTML = '<div class="empty">Nothing queued</div>';
+  } else {
+    queueList.innerHTML = uploadedFiles.map((file, idx) => `
+      <div class="doc-card" style="margin-bottom: 0.5rem;">
+        <div>
+          <div class="doc-title">${file.name}</div>
+          <div class="doc-meta">${formatFileSize(file.size)}</div>
+        </div>
+        <div class="doc-actions">
+          <button onclick="removeFromQueue(${idx})" title="Remove">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function removeFromQueue(index) {
+  uploadedFiles.splice(index, 1);
+  updateQueue();
+  updateUploadZone();
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// ========== START PROCESSING ==========
+
+startBtn.addEventListener('click', async () => {
+  if (uploadedFiles.length === 0) {
+    alert('Please upload at least one file');
+    return;
+  }
+
+  startBtn.disabled = true;
+  startBtn.textContent = 'Processing...';
+
+  try {
+    // Read file contents
+    const fileContents = await Promise.all(
+      uploadedFiles.map(file => readFileAsText(file))
+    );
+
+    // Prepare payload
+    const payload = {
+      files: uploadedFiles.map((file, idx) => ({
+        name: file.name,
+        content: fileContents[idx],
+        size: file.size
+      })),
+      equipment: equipmentItems.map(e => e.name),
+      timestamp: new Date().toISOString()
+    };
+
+    // Send to n8n webhook
+    const response = await fetch(CONFIG.n8nWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) throw new Error('Failed to process files');
+
+    const result = await response.json();
+    
+    // Success
+    alert('Configuration generated successfully! Check your email.');
+    
+    // Clear queue
+    uploadedFiles = [];
+    updateQueue();
+    updateUploadZone();
+    
+    // Refresh past generations
+    await loadPastGenerations();
+
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error processing files: ' + error.message);
+  } finally {
+    startBtn.disabled = false;
+    startBtn.textContent = 'Start';
+  }
+});
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = (e) => reject(e);
+    reader.readAsText(file);
+  });
+}
+
+// ========== INITIALIZATION ==========
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadEquipment();
+  await loadPastGenerations();
+});
