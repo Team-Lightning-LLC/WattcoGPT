@@ -1,6 +1,6 @@
 // Configuration
 const CONFIG = {
-  n8nWebhook: 'YOUR_N8N_WEBHOOK_URL_HERE', // For BOM generation
+  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2', // For BOM generation
   equipmentAPI: '/api/equipment', // Replace with your equipment API endpoint
   generationsAPI: '/api/generations', // Replace with your generations API endpoint
 };
