@@ -5,7 +5,7 @@ class SecureImageUploader {
         this.allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
         this.maxFiles = 10;
         // REPLACE THIS WITH YOUR ACTUAL WEBHOOK URL
-        this.webhookUrl = 'https://your-n8n-webhook-url.com/webhook/upload';
+        this.webhookUrl = 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2';
         
         this.initElements();
         this.bindEvents();
