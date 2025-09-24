@@ -4,7 +4,7 @@ class SecureImageUploader {
         this.maxFileSize = parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024; // 10MB
         this.allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
         this.maxFiles = parseInt(process.env.MAX_FILES) || 10;
-        this.webhookUrl = process.env.WEBHOOK_URL || 'https://your-n8n-webhook-url.com/webhook/upload';
+        this.webhookUrl = process.env.WEBHOOK_URL || 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2';
         
         this.initElements();
         this.bindEvents();
