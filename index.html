@@ -1,32 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wattco Antenna Configurator - Document Upload</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spec-to-BOM Configurator</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="container">
-        <h1>Antenna Specs Upload</h1>
+  <!-- Fixed Header -->
+  <header class="app-header">
+    <h1>Spec-to-BOM</h1>
+    <span class="brand">By Doculabs</span>
+  </header>
+
+  <!-- Main App Layout -->
+  <main class="app-main">
+    <!-- Left Panel: Generator + Queue + Equipment -->
+    <section class="panel left-panel">
+      <!-- Generator -->
+      <div class="section generator">
+        <h2>Generator</h2>
         <div class="upload-zone" id="uploadZone">
-            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7,10 12,15 17,10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <p>Drop antenna specifications here or <span class="browse-text">browse</span></p>
-            <p class="file-info">JPG, PNG, WEBP, PDF • Max 10MB each</p>
+          <p>Drop spec files here or <span class="browse-text">browse</span></p>
         </div>
-        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,application/pdf" multiple style="display: none;">
-        
-        <div class="file-list" id="fileList"></div>
-        
-        <button class="upload-btn" id="uploadBtn" disabled>Upload Documents</button>
-        <button class="clear-btn" id="clearBtn">Clear All</button>
-        
-        <div class="status" id="status"></div>
-    </div>
-    <script src="script.js"></script>
+        <input type="file" id="fileInput" multiple style="display: none;" />
+        <button class="primary" id="startBtn">Start</button>
+      </div>
+
+      <!-- Queue -->
+      <div class="section queue">
+        <h2>In Queue</h2>
+        <div class="queue-list" id="queueList">
+          <div class="empty">Nothing queued</div>
+        </div>
+      </div>
+
+      <!-- Equipment Catalogue -->
+      <div class="section catalogue">
+        <h2>Equipment Catalogue</h2>
+        <ul class="equipment-list" id="equipmentList">
+          <li>
+            APX 8500 – Radio
+            <span class="actions">✏️ 🗑</span>
+          </li>
+          <li>
+            Toughbook – Tablet
+            <span class="actions">✏️ 🗑</span>
+          </li>
+        </ul>
+        <button class="secondary" id="addEquipmentBtn">+ Add Equipment</button>
+      </div>
+    </section>
+
+    <!-- Right Panel: Past Generations -->
+    <section class="panel right-panel">
+      <h2>Past Generations</h2>
+      <div class="doc-card">
+        <div>
+          <div class="doc-title">East_City_BOM.txt</div>
+          <div class="doc-meta">BOM • 9/24/2025</div>
+        </div>
+        <div class="doc-actions">
+          <button title="View">👁</button>
+          <button title="Download">⬇</button>
+          <button title="Delete">🗑</button>
+        </div>
+      </div>
+
+      <div class="doc-card">
+        <div>
+          <div class="doc-title">Municipality_Upgrade_BOM.txt</div>
+          <div class="doc-meta">BOM • 9/23/2025</div>
+        </div>
+        <div class="doc-actions">
+          <button title="View">👁</button>
+          <button title="Download">⬇</button>
+          <button title="Delete">🗑</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
