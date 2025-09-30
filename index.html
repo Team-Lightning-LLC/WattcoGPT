@@ -7,75 +7,200 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Fixed Header -->
+  <!-- Header -->
   <header class="app-header">
-    <h1>WattCO Antenna Kit Configurator</h1>
-    <span class="brand">By Doculabs</span>
+    <div class="header-content">
+      <div class="logo-section">
+        <h1>WattCO</h1>
+        <span class="subtitle">Antenna Kit Configurator</span>
+      </div>
+      <span class="brand">Doculabs</span>
+    </div>
   </header>
 
   <!-- Main App Layout -->
   <main class="app-main">
-    <!-- Left Panel: Generator + Queue + Equipment -->
+    <!-- Left Panel -->
     <section class="panel left-panel">
       <!-- Generator -->
       <div class="section generator">
-        <h2>Generator</h2>
+        <h2>Configuration Generator</h2>
         <div class="upload-zone" id="uploadZone">
-          <p>Drop spec files here or <span class="browse-text">browse</span></p>
+          <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          </svg>
+          <p class="upload-text">Drop specification files</p>
+          <p class="upload-subtext">or <span class="browse-text">browse to upload</span></p>
         </div>
         <input type="file" id="fileInput" multiple style="display: none;" />
-        <button class="primary" id="startBtn">Start</button>
+        <button class="btn-primary" id="startBtn">
+          <span>Generate Configuration</span>
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
       </div>
 
       <!-- Queue -->
       <div class="section queue">
-        <h2>In Queue</h2>
+        <h2>Processing Queue</h2>
         <div class="queue-list" id="queueList">
-          <div class="empty">Nothing queued</div>
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 11l3 3 5-5"/>
+            </svg>
+            <p>No items queued</p>
+          </div>
         </div>
       </div>
 
       <!-- Equipment Catalogue -->
       <div class="section catalogue">
-        <h2>Equipment Catalogue</h2>
+        <div class="section-header">
+          <h2>Equipment Catalogue</h2>
+          <button class="btn-icon-only" id="addEquipmentBtn" title="Add Equipment">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </button>
+        </div>
         <ul class="equipment-list" id="equipmentList">
-          <li>
-            APX 8500 – Radio
-            <span class="actions">✏️ 🗑</span>
+          <li class="equipment-item">
+            <div class="equipment-info">
+              <span class="equipment-name">APX 8500</span>
+              <span class="equipment-type">Radio</span>
+            </div>
+            <div class="equipment-actions">
+              <button class="action-btn" title="Edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="action-btn" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
+            </div>
           </li>
-          <li>
-            Toughbook – Tablet
-            <span class="actions">✏️ 🗑</span>
+          <li class="equipment-item">
+            <div class="equipment-info">
+              <span class="equipment-name">Toughbook CF-33</span>
+              <span class="equipment-type">Tablet</span>
+            </div>
+            <div class="equipment-actions">
+              <button class="action-btn" title="Edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="action-btn" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
+            </div>
           </li>
         </ul>
-        <button class="secondary" id="addEquipmentBtn">+ Add Equipment</button>
       </div>
     </section>
 
-    <!-- Right Panel: Past Generations -->
+    <!-- Right Panel -->
     <section class="panel right-panel">
-      <h2>Past Generations</h2>
-      <div class="doc-card">
-        <div>
-          <div class="doc-title">East_City_BOM.txt</div>
-          <div class="doc-meta">BOM • 9/24/2025</div>
-        </div>
-        <div class="doc-actions">
-          <button title="View">👁</button>
-          <button title="Download">⬇</button>
-          <button title="Delete">🗑</button>
+      <div class="section-header">
+        <h2>Generated Configurations</h2>
+        <div class="view-controls">
+          <button class="view-btn active" title="Grid view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </button>
+          <button class="view-btn" title="List view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
         </div>
       </div>
-
-      <div class="doc-card">
-        <div>
-          <div class="doc-title">Municipality_Upgrade_BOM.txt</div>
-          <div class="doc-meta">BOM • 9/23/2025</div>
+      
+      <div class="doc-grid">
+        <div class="doc-card">
+          <div class="doc-header">
+            <div class="doc-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+              </svg>
+            </div>
+            <div class="doc-badge">BOM</div>
+          </div>
+          <div class="doc-content">
+            <h3 class="doc-title">East City Municipality</h3>
+            <p class="doc-meta">September 24, 2025</p>
+          </div>
+          <div class="doc-actions">
+            <button class="action-btn" title="View">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button class="action-btn" title="Download">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+            </button>
+            <button class="action-btn" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <div class="doc-actions">
-          <button title="View">👁</button>
-          <button title="Download">⬇</button>
-          <button title="Delete">🗑</button>
+
+        <div class="doc-card">
+          <div class="doc-header">
+            <div class="doc-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+              </svg>
+            </div>
+            <div class="doc-badge">BOM</div>
+          </div>
+          <div class="doc-content">
+            <h3 class="doc-title">Municipality Upgrade</h3>
+            <p class="doc-meta">September 23, 2025</p>
+          </div>
+          <div class="doc-actions">
+            <button class="action-btn" title="View">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button class="action-btn" title="Download">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+            </button>
+            <button class="action-btn" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </section>
