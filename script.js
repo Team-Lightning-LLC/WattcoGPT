@@ -1,7 +1,7 @@
 // Configuration
 const CONFIG = {
-  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook/107b82af-4720-4ea0-ba3a-f507d0d006e2', // BOM generation
-  generationsWebhook: 'https://muinf.app.n8n.cloud/webhook/6af4be09-ab78-451d-ae3e-fb793db9164a' // List files from Drive
+  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2',
+  generationsWebhook: 'https://muinf.app.n8n.cloud/webhook-test/6af4be09-ab78-451d-ae3e-fb793db9164a'
 };
 
 // DOM Elements
@@ -44,7 +44,6 @@ function renderPastGenerations(files) {
 }
 
 function createDocCardHTML(file) {
-  // Fix date parsing
   let date = 'Recent';
   if (file.modifiedTime) {
     try {
@@ -83,7 +82,7 @@ function createDocCardHTML(file) {
         <p class="doc-meta">${date}</p>
       </div>
       <div class="doc-actions">
-        <button class="action-btn" onclick="window.open('${viewLink}', '_blank')" title="View">
+        <button class="action-btn" onclick="viewFile('${viewLink}', '${title}')" title="View">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
@@ -104,21 +103,44 @@ function createDocCardHTML(file) {
   `;
 }
 
-function viewFile(url) {
-  window.open(url, '_blank');
+function viewFile(url, title) {
+  const modal = document.getElementById('docModal');
+  const frame = document.getElementById('docFrame');
+  const modalTitle = document.getElementById('modalTitle');
+  
+  modalTitle.textContent = title || 'Document Preview';
+  frame.src = url;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
-function downloadFile(url) {
-  window.open(url, '_blank');
+function closeModal() {
+  const modal = document.getElementById('docModal');
+  const frame = document.getElementById('docFrame');
+  
+  modal.classList.remove('active');
+  frame.src = '';
+  document.body.style.overflow = 'auto';
 }
 
 async function deleteFile(fileId, title) {
   if (!confirm(`Delete "${title}"?`)) return;
-  
-  // You'll need to create a delete webhook in n8n
   alert('Delete functionality requires an n8n delete webhook. File ID: ' + fileId);
-  // TODO: Implement delete webhook call
 }
+
+// Modal event listeners
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('docModal');
+  if (e.target === modal) {
+    closeModal();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeModal();
+  }
+});
 
 // ========== FILE UPLOAD & QUEUE ==========
 
@@ -153,13 +175,13 @@ function updateUploadZone() {
   if (uploadedFiles.length > 0) {
     uploadZone.innerHTML = `<p>${uploadedFiles.length} file(s) selected</p>`;
   } else {
-    uploadZone.innerHTML = '<p>Drop spec files here or <span class="browse-text">browse</span></p>';
+    uploadZone.innerHTML = '<svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg><p class="upload-text">Drop specification files</p><p class="upload-subtext">or <span class="browse-text">browse to upload</span></p>';
   }
 }
 
 function updateQueue() {
   if (uploadedFiles.length === 0) {
-    queueList.innerHTML = '<div class="empty">Nothing queued</div>';
+    queueList.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 11l3 3 5-5"/></svg><p>No items queued</p></div>';
   } else {
     queueList.innerHTML = uploadedFiles.map((file, idx) => `
       <div class="doc-card" style="margin-bottom: 0.5rem;">
@@ -167,8 +189,12 @@ function updateQueue() {
           <div class="doc-title">${file.name}</div>
           <div class="doc-meta">${formatFileSize(file.size)}</div>
         </div>
-        <div class="doc-actions">
-          <button onclick="removeFromQueue(${idx})" title="Remove">🗑</button>
+        <div class="doc-actions" style="opacity: 1; transform: none;">
+          <button class="action-btn" onclick="removeFromQueue(${idx})" title="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
         </div>
       </div>
     `).join('');
@@ -233,7 +259,7 @@ startBtn.addEventListener('click', async () => {
     alert('Error processing files: ' + error.message);
   } finally {
     startBtn.disabled = false;
-    startBtn.textContent = 'Start';
+    startBtn.innerHTML = '<span>Generate Configuration</span><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
   }
 });
 
@@ -249,6 +275,4 @@ function readFileAsText(file) {
 // ========== INITIALIZATION ==========
 
 document.addEventListener('DOMContentLoaded', loadPastGenerations);
-
-// Refresh every 90 seconds
 setInterval(loadPastGenerations, 90000);
