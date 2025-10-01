@@ -141,7 +141,7 @@ body {
   padding: var(--space-xl);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow-y: visbile;
   border: 1px solid var(--gray-200);
   transition: box-shadow var(--transition-base);
 }
@@ -454,7 +454,7 @@ button {
    ═══════════════════════════════════════════════════════════ */
 
 .view-controls {
-  display: flex;
+  display: none;
   gap: var(--space-xs);
 }
 
