@@ -1,8 +1,7 @@
 // Configuration
 const CONFIG = {
-  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2', // For BOM generation
-  equipmentAPI: '/api/equipment', // Replace with your equipment API endpoint
-  generationsAPI: '/api/generations', // Replace with your generations API endpoint
+  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2', // BOM generation
+  generationsWebhook: 'https://muinf.app.n8n.cloud/webhook-test/6af4be09-ab78-451d-ae3e-fb793db9164a' // List files from Drive
 };
 
 // DOM Elements
@@ -10,229 +9,101 @@ const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
 const startBtn = document.getElementById('startBtn');
 const queueList = document.getElementById('queueList');
-const equipmentList = document.getElementById('equipmentList');
-const addEquipmentBtn = document.getElementById('addEquipmentBtn');
 
 // State
 let uploadedFiles = [];
-let equipmentItems = [];
-let pastGenerations = [];
 
-// ========== EQUIPMENT CATALOGUE API ==========
-
-async function loadEquipment() {
-  try {
-    const response = await fetch(CONFIG.equipmentAPI);
-    if (!response.ok) throw new Error('Failed to load equipment');
-    
-    equipmentItems = await response.json();
-    renderEquipment();
-  } catch (error) {
-    console.error('Error loading equipment:', error);
-    // Fallback to default data
-    equipmentItems = [
-      { id: 1, name: 'APX 8500 – Radio' },
-      { id: 2, name: 'Toughbook – Tablet' }
-    ];
-    renderEquipment();
-  }
-}
-
-async function addEquipment(name) {
-  try {
-    const response = await fetch(CONFIG.equipmentAPI, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
-    });
-    
-    if (!response.ok) throw new Error('Failed to add equipment');
-    
-    const newItem = await response.json();
-    equipmentItems.push(newItem);
-    renderEquipment();
-    return true;
-  } catch (error) {
-    console.error('Error adding equipment:', error);
-    alert('Failed to add equipment: ' + error.message);
-    return false;
-  }
-}
-
-async function updateEquipment(id, name) {
-  try {
-    const response = await fetch(`${CONFIG.equipmentAPI}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
-    });
-    
-    if (!response.ok) throw new Error('Failed to update equipment');
-    
-    const updated = await response.json();
-    const index = equipmentItems.findIndex(item => item.id === id);
-    if (index !== -1) {
-      equipmentItems[index] = updated;
-      renderEquipment();
-    }
-    return true;
-  } catch (error) {
-    console.error('Error updating equipment:', error);
-    alert('Failed to update equipment: ' + error.message);
-    return false;
-  }
-}
-
-async function deleteEquipment(id) {
-  try {
-    const response = await fetch(`${CONFIG.equipmentAPI}/${id}`, {
-      method: 'DELETE'
-    });
-    
-    if (!response.ok) throw new Error('Failed to delete equipment');
-    
-    equipmentItems = equipmentItems.filter(item => item.id !== id);
-    renderEquipment();
-    return true;
-  } catch (error) {
-    console.error('Error deleting equipment:', error);
-    alert('Failed to delete equipment: ' + error.message);
-    return false;
-  }
-}
-
-function renderEquipment() {
-  equipmentList.innerHTML = equipmentItems.map((item) => `
-    <li>
-      ${item.name}
-      <span class="actions">
-        <span onclick="handleEditEquipment(${item.id})" style="cursor: pointer;">✏️</span>
-        <span onclick="handleDeleteEquipment(${item.id})" style="cursor: pointer;">🗑</span>
-      </span>
-    </li>
-  `).join('');
-}
-
-function handleEditEquipment(id) {
-  const item = equipmentItems.find(e => e.id === id);
-  if (!item) return;
-  
-  const newName = prompt('Edit equipment name:', item.name);
-  if (newName && newName.trim()) {
-    updateEquipment(id, newName.trim());
-  }
-}
-
-function handleDeleteEquipment(id) {
-  const item = equipmentItems.find(e => e.id === id);
-  if (!item) return;
-  
-  if (confirm(`Delete "${item.name}"?`)) {
-    deleteEquipment(id);
-  }
-}
-
-addEquipmentBtn.addEventListener('click', () => {
-  const name = prompt('Enter equipment name:');
-  if (name && name.trim()) {
-    addEquipment(name.trim());
-  }
-});
-
-// ========== PAST GENERATIONS API ==========
+// ========== PAST GENERATIONS ==========
 
 async function loadPastGenerations() {
   try {
-    const response = await fetch(CONFIG.generationsAPI);
-    if (!response.ok) throw new Error('Failed to load past generations');
+    const response = await fetch(CONFIG.generationsWebhook);
+    if (!response.ok) throw new Error('Failed to load files');
     
-    pastGenerations = await response.json();
-    renderPastGenerations();
+    const files = await response.json();
+    renderPastGenerations(files);
   } catch (error) {
-    console.error('Error loading past generations:', error);
-    // Fallback to default data
-    pastGenerations = [
-      { id: 1, filename: 'East_City_BOM.txt', type: 'BOM', date: '9/24/2025' },
-      { id: 2, filename: 'Municipality_Upgrade_BOM.txt', type: 'BOM', date: '9/23/2025' }
-    ];
-    renderPastGenerations();
+    console.error('Error loading files:', error);
+    const container = document.querySelector('.doc-grid');
+    if (container) {
+      container.innerHTML = '<div class="empty-state"><p>Error loading files</p></div>';
+    }
   }
 }
 
-function renderPastGenerations() {
-  const container = document.querySelector('.right-panel');
-  const generationsHTML = pastGenerations.map(doc => `
+function renderPastGenerations(files) {
+  const container = document.querySelector('.doc-grid');
+  if (!container) return;
+  
+  if (!files || files.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p>No configurations yet</p></div>';
+    return;
+  }
+  
+  container.innerHTML = files.map(file => createDocCardHTML(file)).join('');
+}
+
+function createDocCardHTML(file) {
+  const date = new Date(file.modifiedTime).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  
+  const titleMatch = file.name.match(/WattCO_Config_(.+?)_\d{4}/);
+  const title = titleMatch ? titleMatch[1].replace(/_/g, ' ') : file.name.replace('.html', '');
+  
+  return `
     <div class="doc-card">
-      <div>
-        <div class="doc-title">${doc.filename}</div>
-        <div class="doc-meta">${doc.type} • ${doc.date}</div>
+      <div class="doc-header">
+        <div class="doc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+          </svg>
+        </div>
+        <div class="doc-badge">BOM</div>
+      </div>
+      <div class="doc-content">
+        <h3 class="doc-title">${title}</h3>
+        <p class="doc-meta">${date}</p>
       </div>
       <div class="doc-actions">
-        <button onclick="viewDocument(${doc.id})" title="View">👁</button>
-        <button onclick="downloadDocument(${doc.id})" title="Download">⬇</button>
-        <button onclick="handleDeleteDocument(${doc.id})" title="Delete">🗑</button>
+        <button class="action-btn" onclick="viewFile('${file.webViewLink}')" title="View">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+        <button class="action-btn" onclick="downloadFile('${file.webContentLink}')" title="Download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+        </button>
+        <button class="action-btn" onclick="deleteFile('${file.id}', '${title}')" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
       </div>
     </div>
-  `).join('');
-  
-  container.innerHTML = `<h2>Past Generations</h2>${generationsHTML}`;
+  `;
 }
 
-async function viewDocument(id) {
-  try {
-    const response = await fetch(`${CONFIG.generationsAPI}/${id}`);
-    if (!response.ok) throw new Error('Failed to load document');
-    
-    const doc = await response.json();
-    
-    // Open in new window or modal
-    const newWindow = window.open('', '_blank');
-    newWindow.document.write(doc.html || doc.content);
-    newWindow.document.close();
-  } catch (error) {
-    console.error('Error viewing document:', error);
-    alert('Failed to view document: ' + error.message);
-  }
+function viewFile(url) {
+  window.open(url, '_blank');
 }
 
-async function downloadDocument(id) {
-  try {
-    const response = await fetch(`${CONFIG.generationsAPI}/${id}/download`);
-    if (!response.ok) throw new Error('Failed to download document');
-    
-    const blob = await response.blob();
-    const doc = pastGenerations.find(d => d.id === id);
-    
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = doc?.filename || `document-${id}.html`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-  } catch (error) {
-    console.error('Error downloading document:', error);
-    alert('Failed to download document: ' + error.message);
-  }
+function downloadFile(url) {
+  window.open(url, '_blank');
 }
 
-async function handleDeleteDocument(id) {
-  const doc = pastGenerations.find(d => d.id === id);
-  if (!doc) return;
+async function deleteFile(fileId, title) {
+  if (!confirm(`Delete "${title}"?`)) return;
   
-  if (!confirm(`Delete "${doc.filename}"?`)) return;
-  
-  try {
-    const response = await fetch(`${CONFIG.generationsAPI}/${id}`, {
-      method: 'DELETE'
-    });
-    
-    if (!response.ok) throw new Error('Failed to delete document');
-    
-    pastGenerations = pastGenerations.filter(d => d.id !== id);
-    renderPastGenerations();
-  } catch (error) {
-    console.error('Error deleting document:', error);
-    alert('Failed to delete document: ' + error.message);
-  }
+  // You'll need to create a delete webhook in n8n
+  alert('Delete functionality requires an n8n delete webhook. File ID: ' + fileId);
+  // TODO: Implement delete webhook call
 }
 
 // ========== FILE UPLOAD & QUEUE ==========
@@ -314,23 +185,19 @@ startBtn.addEventListener('click', async () => {
   startBtn.textContent = 'Processing...';
 
   try {
-    // Read file contents
     const fileContents = await Promise.all(
       uploadedFiles.map(file => readFileAsText(file))
     );
 
-    // Prepare payload
     const payload = {
       files: uploadedFiles.map((file, idx) => ({
         name: file.name,
         content: fileContents[idx],
         size: file.size
       })),
-      equipment: equipmentItems.map(e => e.name),
       timestamp: new Date().toISOString()
     };
 
-    // Send to n8n webhook
     const response = await fetch(CONFIG.n8nWebhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -339,17 +206,12 @@ startBtn.addEventListener('click', async () => {
 
     if (!response.ok) throw new Error('Failed to process files');
 
-    const result = await response.json();
+    alert('Configuration generated successfully! Check your email and Google Drive.');
     
-    // Success
-    alert('Configuration generated successfully! Check your email.');
-    
-    // Clear queue
     uploadedFiles = [];
     updateQueue();
     updateUploadZone();
     
-    // Refresh past generations
     await loadPastGenerations();
 
   } catch (error) {
@@ -372,7 +234,7 @@ function readFileAsText(file) {
 
 // ========== INITIALIZATION ==========
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadEquipment();
-  await loadPastGenerations();
-});
+document.addEventListener('DOMContentLoaded', loadPastGenerations);
+
+// Refresh every 90 seconds
+setInterval(loadPastGenerations, 90000);
