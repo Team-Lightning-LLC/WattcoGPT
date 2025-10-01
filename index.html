@@ -17,7 +17,6 @@
       <span class="brand">Doculabs</span>
     </div>
   </header>
-
   <!-- Main App Layout -->
   <main class="app-main">
     <!-- Left Panel -->
@@ -40,7 +39,6 @@
           </svg>
         </button>
       </div>
-
       <!-- Queue -->
       <div class="section queue">
         <h2>Processing Queue</h2>
@@ -55,35 +53,38 @@
         </div>
       </div>
     </section>
+    
+    <!-- Right Panel -->
+    <section class="panel right-panel">
+      <div class="section-header">
+        <h2>Generated Configurations</h2>
+        <div class="view-controls">
+          <button class="view-btn active" title="Grid view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </button>
+          <button class="view-btn" title="List view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Cards will be populated by JavaScript -->
+      <div class="doc-grid"></div>
+    </section>
+  </main>
 
-<!-- Right Panel -->
-<section class="panel right-panel">
-  <div class="section-header">
-    <h2>Generated Configurations</h2>
-    <div class="view-controls">
-      <button class="view-btn active" title="Grid view">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7"/>
-          <rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/>
-        </svg>
-      </button>
-      <button class="view-btn" title="List view">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="8" y1="6" x2="21" y2="6"/>
-          <line x1="8" y1="12" x2="21" y2="12"/>
-          <line x1="8" y1="18" x2="21" y2="18"/>
-          <line x1="3" y1="6" x2="3.01" y2="6"/>
-          <line x1="3" y1="12" x2="3.01" y2="12"/>
-          <line x1="3" y1="18" x2="3.01" y2="18"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-  
-  <!-- Cards will be populated by JavaScript -->
-  <div class="doc-grid"></div>
-</section>
+  <script src="script.js"></script>
 </body>
 </html>
