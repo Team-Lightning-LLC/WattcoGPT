@@ -44,14 +44,28 @@ function renderPastGenerations(files) {
 }
 
 function createDocCardHTML(file) {
-  const date = new Date(file.modifiedTime).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  });
+  // Fix date parsing
+  let date = 'Recent';
+  if (file.modifiedTime) {
+    try {
+      const parsedDate = new Date(file.modifiedTime);
+      if (!isNaN(parsedDate.getTime())) {
+        date = parsedDate.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+    } catch (e) {
+      date = 'Recent';
+    }
+  }
   
-  const titleMatch = file.name.match(/WattCO_Config_(.+?)_\d{4}/);
+  const titleMatch = file.name.match(/WattCO_Config_(.+?)\.html/);
   const title = titleMatch ? titleMatch[1].replace(/_/g, ' ') : file.name.replace('.html', '');
+  
+  const viewLink = `https://drive.google.com/file/d/${file.id}/view`;
+  const downloadLink = `https://drive.google.com/uc?export=download&id=${file.id}`;
   
   return `
     <div class="doc-card">
@@ -69,13 +83,13 @@ function createDocCardHTML(file) {
         <p class="doc-meta">${date}</p>
       </div>
       <div class="doc-actions">
-        <button class="action-btn" onclick="viewFile('${file.webViewLink}')" title="View">
+        <button class="action-btn" onclick="window.open('${viewLink}', '_blank')" title="View">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
         </button>
-        <button class="action-btn" onclick="downloadFile('${file.webContentLink}')" title="Download">
+        <button class="action-btn" onclick="window.open('${downloadLink}', '_blank')" title="Download">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
           </svg>
