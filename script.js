@@ -49,21 +49,55 @@ function renderPastGenerations(files) {
 }
 
 function createDocCardHTML(file) {
-  let date = 'Recent';
-  if (file.modifiedTime) {
-    try {
-      const parsedDate = new Date(file.modifiedTime);
-      if (!isNaN(parsedDate.getTime())) {
-        date = parsedDate.toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric'
-        });
-      }
-    } catch (e) {
-      date = 'Recent';
-    }
-  }
+  // Use "Recent" since modifiedTime isn't available
+  const date = 'Recent';
+  
+  // Extract title from filename
+  const titleMatch = file.name.match(/PWAT-[\w-]+|TGWAT-[\w-]+/);
+  const title = titleMatch ? titleMatch[0] : file.name.replace(/\.(html|doc)$/, '');
+  
+  // You already have webViewLink from n8n
+  const viewLink = file.webViewLink;
+  
+  // Construct download link from file ID
+  const downloadLink = `https://drive.google.com/uc?export=download&id=${file.id}`;
+  
+  return `
+    <div class="doc-card">
+      <div class="doc-header">
+        <div class="doc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+          </svg>
+        </div>
+        <div class="doc-badge">BOM</div>
+      </div>
+      <div class="doc-content">
+        <h3 class="doc-title">${title}</h3>
+        <p class="doc-meta">${date}</p>
+      </div>
+      <div class="doc-actions">
+        <button class="action-btn" onclick="viewFile('${viewLink}', '${title}')" title="View">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+        <button class="action-btn" onclick="downloadFile('${downloadLink}', '${file.name}')" title="Download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+        </button>
+        <button class="action-btn" onclick="alert('Delete requires n8n webhook setup')" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  `;
+}
   
   const titleMatch = file.name.match(/WattCO_Config_(.+?)\.html/);
   const title = titleMatch ? titleMatch[1].replace(/_/g, ' ') : file.name.replace('.html', '');
