@@ -1,7 +1,7 @@
 // Configuration
 const CONFIG = {
-  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2',
-  generationsWebhook: 'https://muinf.app.n8n.cloud/webhook-test/6af4be09-ab78-451d-ae3e-fb793db9164a'
+  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook/107b82af-4720-4ea0-ba3a-f507d0d006e2',
+  generationsWebhook: 'https://muinf.app.n8n.cloud/webhook/6af4be09-ab78-451d-ae3e-fb793db9164a'
 };
 
 // DOM Elements
