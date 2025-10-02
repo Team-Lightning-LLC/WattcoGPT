@@ -34,6 +34,9 @@ async function loadPastGenerations() {
 }
 
 function renderPastGenerations(files) {
+  console.log('Raw files data:', files);
+  console.log('First file:', files[0]);
+  
   const container = document.querySelector('.doc-grid');
   if (!container) return;
   
