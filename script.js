@@ -92,14 +92,8 @@ function createDocCardHTML(file) {
 }
 
 function viewFile(url, title) {
-  const modal = document.getElementById('docModal');
-  const frame = document.getElementById('docFrame');
-  const modalTitle = document.getElementById('modalTitle');
-  
-  modalTitle.textContent = title || 'Document Preview';
-  frame.src = url;
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
+  // Just open in new tab instead of modal
+  window.open(url, '_blank');
 }
 
 function downloadFile(url, filename) {
