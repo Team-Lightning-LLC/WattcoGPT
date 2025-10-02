@@ -624,3 +624,141 @@ button {
     height: 95vh;
   }
 }
+/* ═══════════════════════════════════════════════════════════
+   QUEUE ITEMS
+   ═══════════════════════════════════════════════════════════ */
+
+.queue-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--space-sm);
+  transition: all var(--transition-base);
+}
+
+.queue-item:hover {
+  background: #ffffff;
+  border-color: var(--gray-300);
+  box-shadow: var(--shadow-sm);
+}
+
+.queue-item-info {
+  flex: 1;
+}
+
+.queue-item-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-900);
+  margin-bottom: var(--space-xs);
+}
+
+.queue-item-size {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.remove-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--gray-400);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.remove-btn:hover {
+  background: var(--gray-100);
+  color: var(--gray-900);
+}
+
+.remove-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROCESSING STATE
+   ═══════════════════════════════════════════════════════════ */
+
+.processing-state {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-lg);
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.processing-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: var(--space-xs);
+}
+
+.processing-time {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  margin-bottom: var(--space-lg);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+  transition: width 1s linear;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SUCCESS STATE
+   ═══════════════════════════════════════════════════════════ */
+
+.success-state {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+}
+
+.success-state svg {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--space-lg);
+  color: #10b981;
+  stroke-width: 2.5;
+}
+
+.success-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #10b981;
+  margin-bottom: var(--space-xs);
+}
+
+.success-subtitle {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
