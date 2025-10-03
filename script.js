@@ -12,8 +12,6 @@ const queueList = document.getElementById('queueList');
 
 // State
 let uploadedFiles = [];
-let isProcessing = false;
-let processingTimer = null;
 
 // ========== PAST GENERATIONS ==========
 
@@ -46,12 +44,41 @@ function renderPastGenerations(files) {
 }
 
 function createDocCardHTML(file) {
-  const date = 'Recent';
+  // UPDATED: Extract file ID from webViewLink since file.id isn't provided
+  let fileId = null;
+  if (file.webViewLink) {
+    const match = file.webViewLink.match(/\/file\/d\/([^\/]+)/);
+    fileId = match ? match[1] : null;
+  }
   
-  const titleMatch = file.name.match(/PWAT-[\w-]+|TGWAT-[\w-]+/);
-  const title = titleMatch ? titleMatch[0] : file.name.replace(/\.(html|doc)$/, '');
+  // Skip this file if we can't get an ID
+  if (!fileId) {
+    console.error('No file ID found for:', file);
+    return '';
+  }
+
+  let date = 'Recent';
+  if (file.modifiedTime) {
+    try {
+      const parsedDate = new Date(file.modifiedTime);
+      if (!isNaN(parsedDate.getTime())) {
+        date = parsedDate.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+    } catch (e) {
+      date = 'Recent';
+    }
+  }
   
-  const downloadLink = `https://drive.google.com/uc?export=download&id=${file.id}`;
+  const titleMatch = file.name.match(/WattCO_Config_(.+?)\.html/);
+  const title = titleMatch ? titleMatch[1].replace(/_/g, ' ') : file.name.replace('.html', '');
+  
+  // UPDATED: Use extracted fileId instead of file.id
+  const viewLink = `https://drive.google.com/file/d/${fileId}/view`;
+  const downloadLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
   
   return `
     <div class="doc-card">
@@ -69,18 +96,18 @@ function createDocCardHTML(file) {
         <p class="doc-meta">${date}</p>
       </div>
       <div class="doc-actions">
-        <button class="action-btn" onclick="viewFile('${file.id}', '${file.name}', '${title}')" title="View">
+        <button class="action-btn" onclick="window.open('${viewLink}', '_blank')" title="View">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
         </button>
-        <button class="action-btn" onclick="downloadFile('${downloadLink}', '${file.name}')" title="Download">
+        <button class="action-btn" onclick="window.open('${downloadLink}', '_blank')" title="Download">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
           </svg>
         </button>
-        <button class="action-btn" onclick="alert('Delete requires n8n webhook setup')" title="Delete">
+        <button class="action-btn" onclick="deleteFile('${fileId}', '${title}')" title="Delete">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
           </svg>
@@ -90,26 +117,15 @@ function createDocCardHTML(file) {
   `;
 }
 
-function viewFile(fileId, fileName, title) {
+function viewFile(url, title) {
   const modal = document.getElementById('docModal');
   const frame = document.getElementById('docFrame');
   const modalTitle = document.getElementById('modalTitle');
   
   modalTitle.textContent = title || 'Document Preview';
-  frame.src = `https://drive.google.com/file/d/${fileId}/preview`;
-  
+  frame.src = url;
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
-}
-
-function downloadFile(url, filename) {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.target = '_blank';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
 
 function closeModal() {
@@ -121,6 +137,12 @@ function closeModal() {
   document.body.style.overflow = 'auto';
 }
 
+async function deleteFile(fileId, title) {
+  if (!confirm(`Delete "${title}"?`)) return;
+  alert('Delete functionality requires an n8n delete webhook. File ID: ' + fileId);
+}
+
+// Modal event listeners
 document.addEventListener('click', (e) => {
   const modal = document.getElementById('docModal');
   if (e.target === modal) {
@@ -165,103 +187,32 @@ function handleFiles(files) {
 
 function updateUploadZone() {
   if (uploadedFiles.length > 0) {
-    uploadZone.innerHTML = `<p class="upload-text">${uploadedFiles.length} file(s) selected</p>`;
+    uploadZone.innerHTML = `<p>${uploadedFiles.length} file(s) selected</p>`;
   } else {
-    uploadZone.innerHTML = `
-      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-      </svg>
-      <p class="upload-text">Drop specification files</p>
-      <p class="upload-subtext">or <span class="browse-text">browse to upload</span></p>
-    `;
+    uploadZone.innerHTML = '<svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg><p class="upload-text">Drop specification files</p><p class="upload-subtext">or <span class="browse-text">browse to upload</span></p>';
   }
 }
 
 function updateQueue() {
-  if (isProcessing) return;
-  
   if (uploadedFiles.length === 0) {
-    queueList.innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M9 11l3 3 5-5"/>
-        </svg>
-        <p>No items queued</p>
-      </div>
-    `;
+    queueList.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 11l3 3 5-5"/></svg><p>No items queued</p></div>';
   } else {
     queueList.innerHTML = uploadedFiles.map((file, idx) => `
-      <div class="queue-item">
-        <div class="queue-item-info">
-          <div class="queue-item-name">${file.name}</div>
-          <div class="queue-item-size">${formatFileSize(file.size)}</div>
+      <div class="doc-card" style="margin-bottom: 0.5rem;">
+        <div>
+          <div class="doc-title">${file.name}</div>
+          <div class="doc-meta">${formatFileSize(file.size)}</div>
         </div>
-        <button class="remove-btn" onclick="removeFromQueue(${idx})" title="Remove">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
+        <div class="doc-actions" style="opacity: 1; transform: none;">
+          <button class="action-btn" onclick="removeFromQueue(${idx})" title="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
       </div>
     `).join('');
   }
-}
-
-function showProcessingState() {
-  isProcessing = true;
-  let timeLeft = 60;
-  
-  const updateTimer = () => {
-    if (!isProcessing) return;
-    
-    queueList.innerHTML = `
-      <div class="processing-state">
-        <div class="spinner"></div>
-        <p class="processing-title">Generating Configuration</p>
-        <p class="processing-time">Estimated: ${timeLeft}s remaining</p>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: ${((60 - timeLeft) / 60) * 100}%"></div>
-        </div>
-      </div>
-    `;
-    
-    if (timeLeft > 0) {
-      timeLeft--;
-      processingTimer = setTimeout(updateTimer, 1000);
-    } else {
-      finishProcessing();
-    }
-  };
-  
-  updateTimer();
-}
-
-function finishProcessing() {
-  isProcessing = false;
-  if (processingTimer) {
-    clearTimeout(processingTimer);
-    processingTimer = null;
-  }
-  
-  queueList.innerHTML = `
-    <div class="success-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-        <polyline points="22 4 12 14.01 9 11.01"/>
-      </svg>
-      <p class="success-title">Configuration Complete!</p>
-      <p class="success-subtitle">Check Google Drive for your document</p>
-    </div>
-  `;
-  
-  loadPastGenerations();
-  
-  setTimeout(() => {
-    if (!isProcessing) {
-      updateQueue();
-    }
-  }, 4000);
 }
 
 function removeFromQueue(index) {
@@ -285,9 +236,7 @@ startBtn.addEventListener('click', async () => {
   }
 
   startBtn.disabled = true;
-  startBtn.innerHTML = '<span>Processing...</span>';
-  
-  showProcessingState();
+  startBtn.textContent = 'Processing...';
 
   try {
     const fileContents = await Promise.all(
@@ -310,27 +259,21 @@ startBtn.addEventListener('click', async () => {
     });
 
     if (!response.ok) throw new Error('Failed to process files');
+
+    alert('Configuration generated successfully! Check your email and Google Drive.');
     
     uploadedFiles = [];
+    updateQueue();
     updateUploadZone();
+    
+    await loadPastGenerations();
 
   } catch (error) {
     console.error('Error:', error);
     alert('Error processing files: ' + error.message);
-    isProcessing = false;
-    if (processingTimer) {
-      clearTimeout(processingTimer);
-      processingTimer = null;
-    }
-    updateQueue();
   } finally {
     startBtn.disabled = false;
-    startBtn.innerHTML = `
-      <span>Generate Configuration</span>
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M5 12h14M12 5l7 7-7 7"/>
-      </svg>
-    `;
+    startBtn.innerHTML = '<span>Generate Configuration</span><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
   }
 });
 
