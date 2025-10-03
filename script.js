@@ -46,6 +46,10 @@ function renderPastGenerations(files) {
 }
 
 function createDocCardHTML(file) {
+   console.log('Creating card for:', file.name);
+  console.log('File ID:', file.id);
+  console.log('Full file object:', file);
+  
   const date = 'Recent';
   
   const titleMatch = file.name.match(/PWAT-[\w-]+|TGWAT-[\w-]+/);
