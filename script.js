@@ -46,6 +46,12 @@ function renderPastGenerations(files) {
 }
 
 function createDocCardHTML(file) {
+  // Extract ID from webViewLink if id not provided
+  let fileId = file.id;
+  if (!fileId && file.webViewLink) {
+    const match = file.webViewLink.match(/\/d\/([^\/]+)/);
+    fileId = match ? match[1] : null;
+  }
    console.log('Creating card for:', file.name);
   console.log('File ID:', file.id);
   console.log('Full file object:', file);
