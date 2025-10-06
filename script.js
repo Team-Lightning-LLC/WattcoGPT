@@ -34,15 +34,25 @@ async function loadPastGenerations() {
 }
 
 function renderPastGenerations(files) {
+  console.log('Raw webhook response:', files);
+  
   const container = document.querySelector('.doc-grid');
   if (!container) return;
   
-  if (!files || files.length === 0) {
+  // Handle different response formats
+  let fileArray = files;
+  
+  // If it's wrapped in an object, unwrap it
+  if (files && !Array.isArray(files)) {
+    fileArray = files.files || files.data || files.items || [];
+  }
+  
+  if (!fileArray || fileArray.length === 0) {
     container.innerHTML = '<div class="empty-state"><p>No configurations yet</p></div>';
     return;
   }
   
-  container.innerHTML = files.map(file => createDocCardHTML(file)).join('');
+  container.innerHTML = fileArray.map(file => createDocCardHTML(file)).join('');
 }
 
 function createDocCardHTML(file) {
