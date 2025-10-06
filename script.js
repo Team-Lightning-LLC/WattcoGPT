@@ -28,7 +28,7 @@ async function loadPastGenerations() {
     console.error('Error loading files:', error);
     const container = document.querySelector('.doc-grid');
     if (container) {
-      container.innerHTML = '<div class="empty-state"><p>No Content Loaded</p></div>';
+      container.innerHTML = '<div class="empty-state"><p>Error loading files</p></div>';
     }
   }
 }
