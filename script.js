@@ -46,13 +46,27 @@ function renderPastGenerations(files) {
 }
 
 function createDocCardHTML(file) {
-  const date = 'Recent';
+  let date = 'Recent';
+  if (file.modifiedTime) {
+    try {
+      const parsedDate = new Date(file.modifiedTime);
+      if (!isNaN(parsedDate.getTime())) {
+        date = parsedDate.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+    } catch (e) {
+      date = 'Recent';
+    }
+  }
   
-  const titleMatch = file.name.match(/PWAT-[\w-]+|TGWAT-[\w-]+/);
-  const title = titleMatch ? titleMatch[0] : file.name.replace(/\.(html|doc)$/, '');
+  const titleMatch = file.name.match(/WattCO_Config_(.+?)\.html/);
+  const title = titleMatch ? titleMatch[1].replace(/_/g, ' ') : file.name.replace('.html', '');
   
-  const viewLink = file.webViewLink;
-  const downloadLink = `https://drive.google.com/uc?export=download&id=${file.id}`;
+  const viewLink = file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`;
+  const downloadLink = file.webContentLink || `https://drive.google.com/uc?export=download&id=${file.id}`;
   
   return `
     <div class="doc-card">
@@ -121,6 +135,7 @@ function closeModal() {
   document.body.style.overflow = 'auto';
 }
 
+// Modal event listeners
 document.addEventListener('click', (e) => {
   const modal = document.getElementById('docModal');
   if (e.target === modal) {
