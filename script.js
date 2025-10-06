@@ -28,7 +28,7 @@ async function loadPastGenerations() {
     console.error('Error loading files:', error);
     const container = document.querySelector('.doc-grid');
     if (container) {
-      container.innerHTML = '<div class="empty-state"><p>No Content Loaded</p></div>';
+      container.innerHTML = '<div class="empty-state"><p>Error loading files</p></div>';
     }
   }
 }
@@ -46,21 +46,12 @@ function renderPastGenerations(files) {
 }
 
 function createDocCardHTML(file) {
-  // Extract ID from webViewLink if id not provided
-  let fileId = file.id;
-  if (!fileId && file.webViewLink) {
-    const match = file.webViewLink.match(/\/d\/([^\/]+)/);
-    fileId = match ? match[1] : null;
-  }
-   console.log('Creating card for:', file.name);
-  console.log('File ID:', file.id);
-  console.log('Full file object:', file);
-  
   const date = 'Recent';
   
   const titleMatch = file.name.match(/PWAT-[\w-]+|TGWAT-[\w-]+/);
   const title = titleMatch ? titleMatch[0] : file.name.replace(/\.(html|doc)$/, '');
   
+  const viewLink = file.webViewLink;
   const downloadLink = `https://drive.google.com/uc?export=download&id=${file.id}`;
   
   return `
@@ -79,7 +70,7 @@ function createDocCardHTML(file) {
         <p class="doc-meta">${date}</p>
       </div>
       <div class="doc-actions">
-        <button class="action-btn" onclick="viewFile('${file.id}', '${file.name}', '${title}')" title="View">
+        <button class="action-btn" onclick="viewFile('${viewLink}', '${title}')" title="View">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
@@ -100,14 +91,13 @@ function createDocCardHTML(file) {
   `;
 }
 
-function viewFile(fileId, fileName, title) {
+function viewFile(url, title) {
   const modal = document.getElementById('docModal');
   const frame = document.getElementById('docFrame');
   const modalTitle = document.getElementById('modalTitle');
   
   modalTitle.textContent = title || 'Document Preview';
-  frame.src = `https://drive.google.com/file/d/${fileId}/preview`;
-  
+  frame.src = url;
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
