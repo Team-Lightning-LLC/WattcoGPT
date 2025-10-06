@@ -49,8 +49,17 @@ function renderPastGenerations(files) {
   const container = document.querySelector('.doc-grid');
   if (!container) return;
   
+  console.log('Raw files from Supabase:', files); // DEBUG
+  
   // Filter out folder entries and system files
-  const validFiles = files.filter(f => f.name && !f.name.startsWith('.') && f.id);
+  // Removed the f.id check - Storage list() doesn't return id
+  const validFiles = files.filter(f => 
+    f.name && 
+    !f.name.startsWith('.') && 
+    !f.name.endsWith('/')  // Remove folders
+  );
+  
+  console.log('Valid files after filter:', validFiles); // DEBUG
   
   if (validFiles.length === 0) {
     container.innerHTML = '<div class="empty-state"><p>No configurations yet</p></div>';
@@ -59,7 +68,6 @@ function renderPastGenerations(files) {
   
   container.innerHTML = validFiles.map(file => createDocCardHTML(file)).join('');
 }
-
 function createDocCardHTML(file) {
   const titleMatch = file.name.match(/PWAT-[\w-]+|TGWAT-[\w-]+/);
   const title = titleMatch ? titleMatch[0] : file.name.replace(/\.(html|doc)$/, '');
