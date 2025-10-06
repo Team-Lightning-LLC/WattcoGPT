@@ -1,8 +1,15 @@
 // Configuration
 const CONFIG = {
   n8nWebhook: 'https://muinf.app.n8n.cloud/webhook/107b82af-4720-4ea0-ba3a-f507d0d006e2',
-  generationsWebhook: 'https://muinf.app.n8n.cloud/webhook/6af4be09-ab78-451d-ae3e-fb793db9164a'
+  supabase: {
+    url: 'https://ziuyzasstkmvpbdexktr.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppdXl6YXNzdGttdnBiZGV4a3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NTE0NzcsImV4cCI6MjA3NTMyNzQ3N30.T-6T_8iaT1KG346Tn3wpL8CxtkQ3RUciEjo5RQg0z4Q',
+    bucket: 'wattco-output'
+  }
 };
+
+// Initialize Supabase
+const supabase = window.supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
 
 // DOM Elements
 const uploadZone = document.getElementById('uploadZone');
@@ -15,68 +22,49 @@ let uploadedFiles = [];
 let isProcessing = false;
 let processingTimer = null;
 
-// ========== PAST GENERATIONS ==========
+// ========== PAST GENERATIONS - PURE SUPABASE ==========
 
 async function loadPastGenerations() {
   try {
-    const response = await fetch(CONFIG.generationsWebhook);
-    if (!response.ok) throw new Error('Failed to load files');
+    const { data: files, error } = await supabase.storage
+      .from(CONFIG.supabase.bucket)
+      .list('', {
+        sortBy: { column: 'created_at', order: 'desc' }
+      });
     
-    const files = await response.json();
+    if (error) throw error;
+    
+    console.log('Files from Supabase:', files);
     renderPastGenerations(files);
   } catch (error) {
     console.error('Error loading files:', error);
     const container = document.querySelector('.doc-grid');
     if (container) {
-      container.innerHTML = '<div class="empty-state"><p>Error loading files</p></div>';
+      container.innerHTML = '<div class="empty-state"><p>Failed to load files</p></div>';
     }
   }
 }
 
 function renderPastGenerations(files) {
-  console.log('Raw webhook response:', files);
-  
   const container = document.querySelector('.doc-grid');
   if (!container) return;
   
-  // Handle different response formats
-  let fileArray = files;
+  // Filter out folder entries and system files
+  const validFiles = files.filter(f => f.name && !f.name.startsWith('.') && f.id);
   
-  // If it's wrapped in an object, unwrap it
-  if (files && !Array.isArray(files)) {
-    fileArray = files.files || files.data || files.items || [];
-  }
-  
-  if (!fileArray || fileArray.length === 0) {
+  if (validFiles.length === 0) {
     container.innerHTML = '<div class="empty-state"><p>No configurations yet</p></div>';
     return;
   }
   
-  container.innerHTML = fileArray.map(file => createDocCardHTML(file)).join('');
+  container.innerHTML = validFiles.map(file => createDocCardHTML(file)).join('');
 }
 
 function createDocCardHTML(file) {
-  let date = 'Recent';
-  if (file.modifiedTime) {
-    try {
-      const parsedDate = new Date(file.modifiedTime);
-      if (!isNaN(parsedDate.getTime())) {
-        date = parsedDate.toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric'
-        });
-      }
-    } catch (e) {
-      date = 'Recent';
-    }
-  }
+  const titleMatch = file.name.match(/PWAT-[\w-]+|TGWAT-[\w-]+/);
+  const title = titleMatch ? titleMatch[0] : file.name.replace(/\.(html|doc)$/, '');
   
-  const titleMatch = file.name.match(/WattCO_Config_(.+?)\.html/);
-  const title = titleMatch ? titleMatch[1].replace(/_/g, ' ') : file.name.replace('.html', '');
-  
-  const viewLink = file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`;
-  const downloadLink = file.webContentLink || `https://drive.google.com/uc?export=download&id=${file.id}`;
+  const date = file.created_at ? new Date(file.created_at).toLocaleDateString() : 'Recent';
   
   return `
     <div class="doc-card">
@@ -94,18 +82,18 @@ function createDocCardHTML(file) {
         <p class="doc-meta">${date}</p>
       </div>
       <div class="doc-actions">
-        <button class="action-btn" onclick="viewFile('${viewLink}', '${title}')" title="View">
+        <button class="action-btn" onclick="viewFile('${file.name}', '${title}')" title="View">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
         </button>
-        <button class="action-btn" onclick="downloadFile('${downloadLink}', '${file.name}')" title="Download">
+        <button class="action-btn" onclick="downloadFile('${file.name}')" title="Download">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
           </svg>
         </button>
-        <button class="action-btn" onclick="alert('Delete requires n8n webhook setup')" title="Delete">
+        <button class="action-btn" onclick="deleteFile('${file.name}')" title="Delete">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
           </svg>
@@ -115,25 +103,51 @@ function createDocCardHTML(file) {
   `;
 }
 
-function viewFile(url, title) {
+function viewFile(filename, title) {
+  const { data } = supabase.storage
+    .from(CONFIG.supabase.bucket)
+    .getPublicUrl(filename);
+  
   const modal = document.getElementById('docModal');
   const frame = document.getElementById('docFrame');
   const modalTitle = document.getElementById('modalTitle');
   
   modalTitle.textContent = title || 'Document Preview';
-  frame.src = url;
+  frame.src = data.publicUrl;
+  
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
 
-function downloadFile(url, filename) {
+function downloadFile(filename) {
+  const { data } = supabase.storage
+    .from(CONFIG.supabase.bucket)
+    .getPublicUrl(filename);
+  
   const link = document.createElement('a');
-  link.href = url;
+  link.href = data.publicUrl;
   link.download = filename;
   link.target = '_blank';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+async function deleteFile(filename) {
+  if (!confirm(`Delete ${filename}?`)) return;
+  
+  try {
+    const { error } = await supabase.storage
+      .from(CONFIG.supabase.bucket)
+      .remove([filename]);
+    
+    if (error) throw error;
+    
+    loadPastGenerations(); // Refresh the list
+  } catch (error) {
+    console.error('Delete failed:', error);
+    alert('Failed to delete file');
+  }
 }
 
 function closeModal() {
@@ -145,7 +159,6 @@ function closeModal() {
   document.body.style.overflow = 'auto';
 }
 
-// Modal event listeners
 document.addEventListener('click', (e) => {
   const modal = document.getElementById('docModal');
   if (e.target === modal) {
@@ -276,7 +289,7 @@ function finishProcessing() {
         <polyline points="22 4 12 14.01 9 11.01"/>
       </svg>
       <p class="success-title">Configuration Complete!</p>
-      <p class="success-subtitle">Check Google Drive for your document</p>
+      <p class="success-subtitle">File uploaded successfully</p>
     </div>
   `;
   
@@ -371,4 +384,4 @@ function readFileAsText(file) {
 // ========== INITIALIZATION ==========
 
 document.addEventListener('DOMContentLoaded', loadPastGenerations);
-setInterval(loadPastGenerations, 90000);
+setInterval(loadPastGenerations, 30000); // Refresh every 30 seconds
