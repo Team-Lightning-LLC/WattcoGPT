@@ -336,14 +336,16 @@ startBtn.addEventListener('click', async () => {
   showProcessingState();
 
   try {
+    // Read files as base64 for images
     const fileContents = await Promise.all(
-      uploadedFiles.map(file => readFileAsText(file))
+      uploadedFiles.map(file => readFileAsBase64(file))
     );
 
     const payload = {
       files: uploadedFiles.map((file, idx) => ({
         name: file.name,
         content: fileContents[idx],
+        mimeType: file.type,
         size: file.size
       })),
       timestamp: new Date().toISOString()
@@ -380,12 +382,13 @@ startBtn.addEventListener('click', async () => {
   }
 });
 
-function readFileAsText(file) {
+// Add this new function for base64 reading
+function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
+    reader.onload = (e) => resolve(e.target.result); // Returns data:image/png;base64,xxx
     reader.onerror = (e) => reject(e);
-    reader.readAsText(file);
+    reader.readAsDataURL(file);
   });
 }
 
