@@ -1,6 +1,6 @@
 // Configuration
 const CONFIG = {
-  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook-test/107b82af-4720-4ea0-ba3a-f507d0d006e2',
+  n8nWebhook: 'https://muinf.app.n8n.cloud/webhook-test/d6b50eca-046e-4597-8864-edb6d43a2a85',
   supabase: {
     url: 'https://ziuyzasstkmvpbdexktr.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppdXl6YXNzdGttdnBiZGV4a3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NTE0NzcsImV4cCI6MjA3NTMyNzQ3N30.T-6T_8iaT1KG346Tn3wpL8CxtkQ3RUciEjo5RQg0z4Q',
