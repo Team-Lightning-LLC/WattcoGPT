@@ -360,6 +360,7 @@ startBtn.addEventListener('click', async () => {
     if (!response.ok) throw new Error('Failed to process files');
     
     uploadedFiles = [];
+    fileInput.value = '';
     updateUploadZone();
 
   } catch (error) {
