@@ -49,17 +49,16 @@ function renderPastGenerations(files) {
   const container = document.querySelector('.doc-grid');
   if (!container) return;
   
-  console.log('Raw files from Supabase:', files); // DEBUG
+  console.log('Raw files from Supabase:', files);
   
   // Filter out folder entries and system files
-  // Removed the f.id check - Storage list() doesn't return id
   const validFiles = files.filter(f => 
     f.name && 
     !f.name.startsWith('.') && 
-    !f.name.endsWith('/')  // Remove folders
+    !f.name.endsWith('/')
   );
   
-  console.log('Valid files after filter:', validFiles); // DEBUG
+  console.log('Valid files after filter:', validFiles);
   
   if (validFiles.length === 0) {
     container.innerHTML = '<div class="empty-state"><p>No configurations yet</p></div>';
@@ -68,6 +67,7 @@ function renderPastGenerations(files) {
   
   container.innerHTML = validFiles.map(file => createDocCardHTML(file)).join('');
 }
+
 function createDocCardHTML(file) {
   const titleMatch = file.name.match(/PWAT-[\w-]+|TGWAT-[\w-]+/);
   const title = titleMatch ? titleMatch[0] : file.name.replace(/\.(html|doc)$/, '');
@@ -111,34 +111,52 @@ function createDocCardHTML(file) {
   `;
 }
 
-function viewFile(filename, title) {
-  const { data } = supabase.storage
-    .from(CONFIG.supabase.bucket)
-    .getPublicUrl(filename);
-  
-  const modal = document.getElementById('docModal');
-  const frame = document.getElementById('docFrame');
-  const modalTitle = document.getElementById('modalTitle');
-  
-  modalTitle.textContent = title || 'Document Preview';
-  frame.src = data.publicUrl;
-  
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
+async function viewFile(filename, title) {
+  try {
+    // Fetch the HTML content
+    const { data } = supabase.storage
+      .from(CONFIG.supabase.bucket)
+      .getPublicUrl(filename);
+    
+    const response = await fetch(data.publicUrl);
+    const htmlContent = await response.text();
+    
+    // Render it in the iframe using srcdoc
+    const modal = document.getElementById('docModal');
+    const frame = document.getElementById('docFrame');
+    const modalTitle = document.getElementById('modalTitle');
+    
+    modalTitle.textContent = title || 'Document Preview';
+    frame.srcdoc = htmlContent; // This renders the HTML instead of showing source
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  } catch (error) {
+    console.error('Error loading file:', error);
+    alert('Failed to load document');
+  }
 }
 
-function downloadFile(filename) {
-  const { data } = supabase.storage
-    .from(CONFIG.supabase.bucket)
-    .getPublicUrl(filename);
-  
-  const link = document.createElement('a');
-  link.href = data.publicUrl;
-  link.download = filename;
-  link.target = '_blank';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+async function downloadFile(filename) {
+  try {
+    const { data } = supabase.storage
+      .from(CONFIG.supabase.bucket)
+      .getPublicUrl(filename);
+    
+    const response = await fetch(data.publicUrl);
+    const blob = await response.blob();
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  } catch (error) {
+    console.error('Download failed:', error);
+    alert('Failed to download file');
+  }
 }
 
 async function deleteFile(filename) {
@@ -163,7 +181,7 @@ function closeModal() {
   const frame = document.getElementById('docFrame');
   
   modal.classList.remove('active');
-  frame.src = '';
+  frame.srcdoc = ''; // Clear srcdoc instead of src
   document.body.style.overflow = 'auto';
 }
 
@@ -360,7 +378,7 @@ startBtn.addEventListener('click', async () => {
     if (!response.ok) throw new Error('Failed to process files');
     
     uploadedFiles = [];
-    fileInput.value = '';
+    fileInput.value = ''; // Reset file input
     updateUploadZone();
 
   } catch (error) {
@@ -383,11 +401,10 @@ startBtn.addEventListener('click', async () => {
   }
 });
 
-// Add this new function for base64 reading
 function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result); // Returns data:image/png;base64,xxx
+    reader.onload = (e) => resolve(e.target.result);
     reader.onerror = (e) => reject(e);
     reader.readAsDataURL(file);
   });
